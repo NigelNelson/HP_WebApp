@@ -1,0 +1,34 @@
+/* The styling for the parent page element */
+.HolyGrail {
+    display: flex;          /* Flex allows for setting the height and to order items in a column */
+    flex-direction: column; /* Set the direct to place elements down a column instead of across a row */
+    min-height: 100vh;      /* Set the height of the display to the entire view */
+    margin: 0;              /* Remove the margin to eliminate scroll bars */
+}
+
+/* The styling for the 'body' element, i.e. the part between the header and footer */
+.HolyGrail-body {
+    display: flex;          /* Flex display allows the 'nav' pane and the 'right' pane to be spaced using flex spacing */
+    flex-grow: 1;           /* Set the grow size of the 'body' element to grow larger than other items */
+    /*  NOTE: The other items in the column are the header and the footer.
+     *        Setting this property to 1 forces the main item to grow to the size
+     *        of the screen minus the size of the header and footer
+     */
+}
+
+/* Styling for the content item i.e. the item in between the 'nav' and the 'right' pane */
+.HolyGrail-content {
+    flex-grow: 1;           /* Force the main content to be full width by setting it's grow value to be larger than
+                                  the 'nav' and 'right' panes */
+}
+
+/* Styling for the 'nav' and 'right' panes - force them to a specific size and don't let them grow or shrink */
+.HolyGrail-nav, .HolyGrail-right {
+    flex-grow: 0;      /* Do not grow with respect to the main content */
+    flex-shrink: 0;    /* Do not shrink with respect to the main content */
+    flex-basis: 15em;  /* 12em is the width of the columns */
+}
+
+.HolyGrail-nav {
+    order: -1; /* put the nav on the left */
+}
