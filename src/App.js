@@ -15,7 +15,10 @@ class App extends React.Component {
             is_hist_loaded: false,
             is_mri_loaded: true,
             mri_data: null,
-            hist_data: null
+            hist_data: null,
+            edit_mri_points: false,
+            hist_shapes: [],
+            mri_shapes: []
         };
     }
 
@@ -31,8 +34,23 @@ class App extends React.Component {
         var mri_canvas = document.getElementById(mri_canvas_id);
         var hist_canvas = document.getElementById(hist_canvas_id);
 
-        var mri_shapes = [];
-        var hist_shapes = [];
+        var mri_shapes = this.state.mri_shapes;
+        var hist_shapes = this.state.hist_shapes;
+
+        var mri_switch_id = "mri_switch"
+
+        const handleClick = () => {
+            let mri_switch = document.getElementById(mri_switch_id);
+            if(mri_switch.checked){
+                this.setState({
+                    edit_mri_points: true
+                });
+            } else {
+                this.setState({
+                    edit_mri_points: false
+                });
+            }
+        }
 
         function readNIFTI(name, data) {
             var mri_div = document.getElementById("mri_div");
@@ -272,6 +290,10 @@ class App extends React.Component {
                     mri_shapes.push( {x:mri_x, y:mri_y, radius:radius, fill:fill, stroke:stroke, strokeWith: strokeWidth} );
                 })
             }
+            this.setState({
+                hist_shapes: hist_shapes,
+                mri_shapes: mri_shapes
+            });
         }
 
         const download_points = () => {
@@ -453,10 +475,12 @@ class App extends React.Component {
         // listen for mouse events
 
         if (mri_data){
-            mri_canvas.onmousedown = handleMouseDown;
-            mri_canvas.onmousemove = handleMouseMove;
-            mri_canvas.onmouseup = handleMouseUp;
-            mri_canvas.onmouseout = handleMouseOut;
+            if(this.state.edit_mri_points) {
+                mri_canvas.onmousedown = handleMouseDown;
+                mri_canvas.onmousemove = handleMouseMove;
+                mri_canvas.onmouseup = handleMouseUp;
+                mri_canvas.onmouseout = handleMouseOut;
+            }
         }
 
         // if(hist_data){
@@ -487,6 +511,7 @@ class App extends React.Component {
                                 <FileSelect  onFileSelect={show_hist} promptStatement="Choose a Histology Image:" className="col"/>
                                 <FileSelect  onFileSelect={show_mri} promptStatement="Choose an MRI Image:" className="col"/>
                                 <FileSelect  onFileSelect={display_points} promptStatement="Choose Histology points:" className="col"/>
+                                <Switch id={mri_switch_id} handleClick={handleClick}></Switch>
                                 <button type="button" className="btn btn-primary" onClick={download_points}>
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                                          className="bi bi-download m-1" viewBox="0 0 16 16">

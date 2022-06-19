@@ -11,7 +11,10 @@ class App extends React.Component {
       is_hist_loaded: false,
       is_mri_loaded: true,
       mri_data: null,
-      hist_data: null
+      hist_data: null,
+      edit_mri_points: false,
+      hist_shapes: [],
+      mri_shapes: []
     };
   }
 
@@ -24,8 +27,23 @@ class App extends React.Component {
     let mri_data = this.state.mri_data;
     var mri_canvas = document.getElementById(mri_canvas_id);
     var hist_canvas = document.getElementById(hist_canvas_id);
-    var mri_shapes = [];
-    var hist_shapes = [];
+    var mri_shapes = this.state.mri_shapes;
+    var hist_shapes = this.state.hist_shapes;
+    var mri_switch_id = "mri_switch";
+
+    const handleClick = () => {
+      let mri_switch = document.getElementById(mri_switch_id);
+
+      if (mri_switch.checked) {
+        this.setState({
+          edit_mri_points: true
+        });
+      } else {
+        this.setState({
+          edit_mri_points: false
+        });
+      }
+    };
 
     function readNIFTI(name, data) {
       var mri_div = document.getElementById("mri_div");
@@ -268,6 +286,11 @@ class App extends React.Component {
           });
         });
       };
+
+      this.setState({
+        hist_shapes: hist_shapes,
+        mri_shapes: mri_shapes
+      });
     };
 
     const download_points = () => {
@@ -449,10 +472,12 @@ class App extends React.Component {
 
 
     if (mri_data) {
-      mri_canvas.onmousedown = handleMouseDown;
-      mri_canvas.onmousemove = handleMouseMove;
-      mri_canvas.onmouseup = handleMouseUp;
-      mri_canvas.onmouseout = handleMouseOut;
+      if (this.state.edit_mri_points) {
+        mri_canvas.onmousedown = handleMouseDown;
+        mri_canvas.onmousemove = handleMouseMove;
+        mri_canvas.onmouseup = handleMouseUp;
+        mri_canvas.onmouseout = handleMouseOut;
+      }
     } // if(hist_data){
     //     hist_canvas.onmousedown = handleMouseDown;
     //     hist_canvas.onmousemove = handleMouseMove;
@@ -494,6 +519,9 @@ class App extends React.Component {
       onFileSelect: display_points,
       promptStatement: "Choose Histology points:",
       className: "col"
+    }), /*#__PURE__*/React.createElement(Switch, {
+      id: mri_switch_id,
+      handleClick: handleClick
     }), /*#__PURE__*/React.createElement("button", {
       type: "button",
       className: "btn btn-primary",
@@ -581,6 +609,23 @@ class MRICanvas extends React.Component {
     return /*#__PURE__*/React.createElement("canvas", {
       id: this.props.id
     });
+  }
+
+}
+class Switch extends React.Component {
+  render() {
+    return /*#__PURE__*/React.createElement("div", {
+      className: "form-check form-switch"
+    }, /*#__PURE__*/React.createElement("input", {
+      className: "form-check-input",
+      type: "checkbox",
+      role: "switch",
+      id: this.props.id,
+      onClick: this.props.handleClick
+    }), /*#__PURE__*/React.createElement("label", {
+      className: "form-check-label",
+      htmlFor: "flexSwitchCheckDefault"
+    }, "Default switch checkbox input"));
   }
 
 }
