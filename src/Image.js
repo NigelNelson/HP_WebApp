@@ -4,12 +4,12 @@
 class Image extends React.Component {
     render() {
 
+        this.state = {
+            margin: "auto"
+        }
+
         return (
-            // <div>
-            //     <img src={this.props.imgSRC} id={this.props.id} width='70%'/>
-            // </div>
-            <div id={this.props.id}>
-            </div>
+            <div id={this.props.id} className={"img-thumbnail"}></div>
         )
     }
 }

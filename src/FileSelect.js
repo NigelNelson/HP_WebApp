@@ -6,7 +6,8 @@ class FileSelect extends React.Component {
                 <input className="form-control"
                        type="file"
                        id="formFile"
-                       onChange={(event) => this.props.onFileSelect(event.target.value)}/>
+                       onChange={(event) => this.props.onFileSelect(event.target.value)}
+                       accept={this.props.acceptedFile}/>
             </div>
         )
     }

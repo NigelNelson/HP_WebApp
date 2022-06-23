@@ -6,15 +6,16 @@ class App extends React.Component {
     super(props); // Set state as needed
 
     this.state = {
-      hist_src: null,
-      mri_src: null,
       is_hist_loaded: false,
       is_mri_loaded: true,
       mri_data: null,
       hist_data: null,
       edit_mri_points: false,
       hist_shapes: [],
-      mri_shapes: []
+      mri_shapes: [],
+      display_hist_points: [],
+      display_mri_points: [],
+      toggle_nums: []
     };
   }
 
@@ -29,7 +30,25 @@ class App extends React.Component {
     var hist_canvas = document.getElementById(hist_canvas_id);
     var mri_shapes = this.state.mri_shapes;
     var hist_shapes = this.state.hist_shapes;
+    var display_hist_points = this.state.display_hist_points;
+    var display_mri_points = this.state.display_mri_points;
     var mri_switch_id = "mri_switch";
+    var num_toggles = 0;
+    var toggle_nums = this.state.toggle_nums;
+
+    const handlePointToggle = num => {
+      this.setState({
+        display_mri_points: [this.state.mri_shapes[num]],
+        display_hist_points: [this.state.hist_shapes[num]]
+      });
+    };
+
+    const handleClickALl = () => {
+      this.setState({
+        display_mri_points: this.state.mri_shapes,
+        display_hist_points: this.state.hist_shapes
+      });
+    };
 
     const handleClick = () => {
       let mri_switch = document.getElementById(mri_switch_id);
@@ -46,9 +65,10 @@ class App extends React.Component {
     };
 
     function readNIFTI(name, data) {
-      var mri_div = document.getElementById("mri_div");
+      var mri_div = document.getElementById(mri_id);
       var canvas = document.createElement("canvas");
       canvas.id = mri_canvas_id;
+      canvas.style.margin = "auto";
       mri_div.append(canvas); // var canvas = document.getElementById(mri_canvas_id);
 
       var niftiHeader, niftiImage; // parse nifti
@@ -197,6 +217,7 @@ class App extends React.Component {
         });
         var canvas = tiff.toCanvas();
         canvas.id = hist_canvas_id;
+        canvas.style.margin = "auto";
         c.append(canvas);
         let ctx = canvas.getContext("2d");
         hist_data = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -218,6 +239,19 @@ class App extends React.Component {
     const log_hist_data = data => {
       this.setState({
         hist_data: data
+      });
+    };
+
+    const log_toggle_nums = toggle_nums => {
+      this.setState({
+        toggle_nums: toggle_nums
+      });
+    };
+
+    const log_display_points = (hist_points, mri_points) => {
+      this.setState({
+        display_hist_points: hist_points,
+        display_mri_points: mri_points
       });
     };
 
@@ -284,12 +318,19 @@ class App extends React.Component {
             stroke: stroke,
             strokeWith: strokeWidth
           });
+          toggle_nums.push(num_toggles);
+          num_toggles = num_toggles + 1;
         });
+        display_mri_points = mri_shapes;
+        display_hist_points = hist_shapes;
+        log_toggle_nums(toggle_nums);
+        log_display_points(display_hist_points, display_mri_points);
       };
 
       this.setState({
         hist_shapes: hist_shapes,
-        mri_shapes: mri_shapes
+        mri_shapes: mri_shapes,
+        toggle_nums: toggle_nums
       });
     };
 
@@ -436,10 +477,10 @@ class App extends React.Component {
 
       if (canvas.id === mri_canvas_id) {
         data = mri_data;
-        shapes = mri_shapes;
+        shapes = display_mri_points;
       } else {
         data = hist_data;
-        shapes = hist_shapes;
+        shapes = display_hist_points;
       }
 
       var ctx = canvas.getContext("2d");
@@ -477,6 +518,11 @@ class App extends React.Component {
         mri_canvas.onmousemove = handleMouseMove;
         mri_canvas.onmouseup = handleMouseUp;
         mri_canvas.onmouseout = handleMouseOut;
+      } else {
+        mri_canvas.onmousedown = null;
+        mri_canvas.onmousemove = null;
+        mri_canvas.onmouseup = null;
+        mri_canvas.onmouseout = null;
       }
     } // if(hist_data){
     //     hist_canvas.onmousedown = handleMouseDown;
@@ -498,46 +544,52 @@ class App extends React.Component {
     }, /*#__PURE__*/React.createElement("div", {
       className: "container"
     }, /*#__PURE__*/React.createElement("div", {
-      className: "row"
+      className: "row row-cols-2 d-flex justify-content-center"
     }, /*#__PURE__*/React.createElement(Image, {
-      imgSRC: this.state.hist_src,
       id: hist_id,
-      className: "col"
-    }), /*#__PURE__*/React.createElement("div", {
-      id: "mri_div"
+      className: "col my-2 d-flex"
+    }), /*#__PURE__*/React.createElement(Image, {
+      id: mri_id,
+      className: "col my-2 d-flex"
     })), /*#__PURE__*/React.createElement("div", {
-      className: "row"
+      className: "row row-cols-2"
     }, /*#__PURE__*/React.createElement(FileSelect, {
       onFileSelect: show_hist,
       promptStatement: "Choose a Histology Image:",
-      className: "col"
+      acceptedFile: ".tiff"
     }), /*#__PURE__*/React.createElement(FileSelect, {
       onFileSelect: show_mri,
       promptStatement: "Choose an MRI Image:",
-      className: "col"
-    }), /*#__PURE__*/React.createElement(FileSelect, {
+      acceptedFile: ".nii"
+    })), /*#__PURE__*/React.createElement("div", {
+      className: "d-flex justify-content-center w-100"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "row row-cols-2 d-flex w-100"
+    }, /*#__PURE__*/React.createElement(FileSelect, {
       onFileSelect: display_points,
       promptStatement: "Choose Histology points:",
-      className: "col"
-    }), /*#__PURE__*/React.createElement(Switch, {
+      acceptedFile: ".csv"
+    }), toggle_nums.length > 0 && /*#__PURE__*/React.createElement(Switch, {
       id: mri_switch_id,
-      handleClick: handleClick
-    }), /*#__PURE__*/React.createElement("button", {
-      type: "button",
-      className: "btn btn-primary",
-      onClick: download_points
-    }, /*#__PURE__*/React.createElement("svg", {
-      xmlns: "http://www.w3.org/2000/svg",
-      width: "16",
-      height: "16",
-      fill: "currentColor",
-      className: "bi bi-download m-1",
-      viewBox: "0 0 16 16"
-    }, /*#__PURE__*/React.createElement("path", {
-      d: "M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"
-    }), /*#__PURE__*/React.createElement("path", {
-      d: "M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"
-    })), "Download Points"))))));
+      handleClick: handleClick,
+      text: "Enable Editing Points",
+      className: "col"
+    }))), /*#__PURE__*/React.createElement("div", {
+      className: "d-flex justify-content-center w-100"
+    }, toggle_nums.length > 0 && /*#__PURE__*/React.createElement("div", {
+      className: "row row-cols-2 d-flex w-100"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "col"
+    }), /*#__PURE__*/React.createElement("div", {
+      className: "col"
+    }, /*#__PURE__*/React.createElement(ToggleGroup, {
+      toggle_nums: toggle_nums,
+      handlePointToggle: handlePointToggle,
+      handleClickAll: handleClickALl
+    }), /*#__PURE__*/React.createElement(DownloadButton, {
+      onClick: download_points,
+      text: "Download Points"
+    }))))))));
   }
 
 }
@@ -562,6 +614,31 @@ class Canvas extends React.Component {
   }
 
 }
+class DownloadButton extends React.Component {
+  render() {
+    return /*#__PURE__*/React.createElement("button", {
+      type: "button",
+      className: "btn btn-primary",
+      onClick: this.props.onClick,
+      style: {
+        maxHWidth: '200px',
+        marginTop: '10px'
+      }
+    }, /*#__PURE__*/React.createElement("svg", {
+      xmlns: "http://www.w3.org/2000/svg",
+      width: "16",
+      height: "16",
+      fill: "currentColor",
+      className: "bi bi-download m-1",
+      viewBox: "0 0 16 16"
+    }, /*#__PURE__*/React.createElement("path", {
+      d: "M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"
+    })), this.props.text);
+  }
+
+}
 class FileSelect extends React.Component {
   render() {
     return /*#__PURE__*/React.createElement("div", {
@@ -573,7 +650,8 @@ class FileSelect extends React.Component {
       className: "form-control",
       type: "file",
       id: "formFile",
-      onChange: event => this.props.onFileSelect(event.target.value)
+      onChange: event => this.props.onFileSelect(event.target.value),
+      accept: this.props.acceptedFile
     }));
   }
 
@@ -582,15 +660,13 @@ class FileSelect extends React.Component {
 // import 'react-loading-skeleton/dist/skeleton.css'
 class Image extends React.Component {
   render() {
-    return (
-      /*#__PURE__*/
-      // <div>
-      //     <img src={this.props.imgSRC} id={this.props.id} width='70%'/>
-      // </div>
-      React.createElement("div", {
-        id: this.props.id
-      })
-    );
+    this.state = {
+      margin: "auto"
+    };
+    return /*#__PURE__*/React.createElement("div", {
+      id: this.props.id,
+      className: "img-thumbnail"
+    });
   }
 
 }
@@ -612,10 +688,35 @@ class MRICanvas extends React.Component {
   }
 
 }
+class PointToggle extends React.Component {
+  render() {
+    const handleClick = () => {
+      this.props.handlePointToggle(this.props.num);
+    };
+
+    return /*#__PURE__*/React.createElement("div", {
+      className: "m-0 p-0 w-100",
+      style: {
+        outlineStyle: "solid",
+        outlineWidth: 1
+      }
+    }, /*#__PURE__*/React.createElement("button", {
+      type: "button",
+      className: "btn btn-sm btn-primary row m-0 w-100",
+      onClick: handleClick,
+      enabled: true
+    }, "Point ", this.props.num + 1));
+  }
+
+}
 class Switch extends React.Component {
   render() {
     return /*#__PURE__*/React.createElement("div", {
-      className: "form-check form-switch"
+      className: "form-check form-switch w-50 col",
+      style: {
+        marginTop: '50px',
+        marginBottom: '15px'
+      }
     }, /*#__PURE__*/React.createElement("input", {
       className: "form-check-input",
       type: "checkbox",
@@ -625,7 +726,37 @@ class Switch extends React.Component {
     }), /*#__PURE__*/React.createElement("label", {
       className: "form-check-label",
       htmlFor: "flexSwitchCheckDefault"
-    }, "Default switch checkbox input"));
+    }, this.props.text));
+  }
+
+}
+class ToggleGroup extends React.Component {
+  render() {
+    return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+      className: "row row-cols-1 w-50 mx-1",
+      style: {
+        overflowX: 'auto',
+        maxHeight: '250px',
+        outlineStyle: "solid",
+        outlineWidth: 1
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "m-0 p-0 w-100",
+      style: {
+        outlineStyle: "solid",
+        outlineWidth: 1
+      }
+    }, /*#__PURE__*/React.createElement("button", {
+      type: "button",
+      className: "btn btn-sm btn-primary row m-0 w-100",
+      onClick: this.props.handleClickAll,
+      enabled: true
+    }, "Show All Points")), this.props.toggle_nums.map(num => /*#__PURE__*/React.createElement("div", {
+      className: "col m-0 p-0 w-100"
+    }, /*#__PURE__*/React.createElement(PointToggle, {
+      num: num,
+      handlePointToggle: this.props.handlePointToggle
+    })))));
   }
 
 }
