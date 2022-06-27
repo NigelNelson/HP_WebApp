@@ -69,6 +69,8 @@ class App extends React.Component {
       var canvas = document.createElement("canvas");
       canvas.id = mri_canvas_id;
       canvas.style.margin = "auto";
+      canvas.style.width = '100%';
+      canvas.style.height = '100%';
       mri_div.append(canvas); // var canvas = document.getElementById(mri_canvas_id);
 
       var niftiHeader, niftiImage; // parse nifti
@@ -218,6 +220,8 @@ class App extends React.Component {
         var canvas = tiff.toCanvas();
         canvas.id = hist_canvas_id;
         canvas.style.margin = "auto";
+        canvas.style.width = '100%';
+        canvas.style.height = '100%';
         c.append(canvas);
         let ctx = canvas.getContext("2d");
         hist_data = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -535,7 +539,12 @@ class App extends React.Component {
 
     return /*#__PURE__*/React.createElement("div", {
       className: "HolyGrail"
-    }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h1", null, "LaViolette Points")), /*#__PURE__*/React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h1", {
+      style: {
+        textAlign: "center"
+      },
+      className: "p-4"
+    }, "LaViolette Points")), /*#__PURE__*/React.createElement("div", {
       className: "HolyGrail-body"
     }, /*#__PURE__*/React.createElement("div", {
       className: "nav"
@@ -562,9 +571,7 @@ class App extends React.Component {
       promptStatement: "Choose an MRI Image:",
       acceptedFile: ".nii"
     })), /*#__PURE__*/React.createElement("div", {
-      className: "d-flex justify-content-center w-100"
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "row row-cols-2 d-flex w-100"
+      className: "row row-cols-2"
     }, /*#__PURE__*/React.createElement(FileSelect, {
       onFileSelect: display_points,
       promptStatement: "Choose Histology points:",
@@ -574,8 +581,8 @@ class App extends React.Component {
       handleClick: handleClick,
       text: "Enable Editing Points",
       className: "col"
-    }))), /*#__PURE__*/React.createElement("div", {
-      className: "d-flex justify-content-center w-100"
+    })), /*#__PURE__*/React.createElement("div", {
+      className: "d-flex justify-content-center w-100 m-0"
     }, toggle_nums.length > 0 && /*#__PURE__*/React.createElement("div", {
       className: "row row-cols-2 d-flex w-100"
     }, /*#__PURE__*/React.createElement("div", {
@@ -618,11 +625,12 @@ class DownloadButton extends React.Component {
   render() {
     return /*#__PURE__*/React.createElement("button", {
       type: "button",
-      className: "btn btn-primary",
+      className: "btn btn-primary w-50",
       onClick: this.props.onClick,
       style: {
         maxHWidth: '200px',
-        marginTop: '10px'
+        marginTop: '10px',
+        marginBottom: '15px'
       }
     }, /*#__PURE__*/React.createElement("svg", {
       xmlns: "http://www.w3.org/2000/svg",
@@ -665,7 +673,14 @@ class Image extends React.Component {
     };
     return /*#__PURE__*/React.createElement("div", {
       id: this.props.id,
-      className: "img-thumbnail"
+      className: "img-thumbnail m-4 p-0",
+      style: {
+        width: '500px',
+        height: '500px',
+        backgroundColor: "#D3D3D3",
+        outlineColor: "#000000",
+        outlineStyle: "solid"
+      }
     });
   }
 
@@ -712,10 +727,12 @@ class PointToggle extends React.Component {
 class Switch extends React.Component {
   render() {
     return /*#__PURE__*/React.createElement("div", {
-      className: "form-check form-switch w-50 col",
+      className: "form-check form-switch col",
       style: {
         marginTop: '50px',
-        marginBottom: '15px'
+        marginBottom: '15px',
+        marginLeft: 'auto',
+        marginRight: '-20px'
       }
     }, /*#__PURE__*/React.createElement("input", {
       className: "form-check-input",
@@ -725,7 +742,10 @@ class Switch extends React.Component {
       onClick: this.props.handleClick
     }), /*#__PURE__*/React.createElement("label", {
       className: "form-check-label",
-      htmlFor: "flexSwitchCheckDefault"
+      htmlFor: "flexSwitchCheckDefault",
+      style: {
+        fontWeight: 'bold'
+      }
     }, this.props.text));
   }
 

@@ -9,7 +9,14 @@ class Image extends React.Component {
         }
 
         return (
-            <div id={this.props.id} className={"img-thumbnail"}></div>
+            <div id={this.props.id}
+                 className={"img-thumbnail m-4 p-0"}
+                 style={{
+                     width: '500px',
+                     height: '500px',
+                     backgroundColor: "#D3D3D3",
+                     outlineColor: "#000000",
+                     outlineStyle: "solid"}}/>
         )
     }
 }

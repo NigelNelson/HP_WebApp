@@ -2,10 +2,11 @@ class DownloadButton extends React.Component {
     render() {
         return (
             <button type="button"
-                    className="btn btn-primary"
+                    className="btn btn-primary w-50"
                     onClick={this.props.onClick}
                     style={{maxHWidth: '200px',
-                            marginTop: '10px'}}>
+                            marginTop: '10px',
+                            marginBottom: '15px'}}>
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                      className="bi bi-download m-1" viewBox="0 0 16 16">
                     <path

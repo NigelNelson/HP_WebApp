@@ -75,8 +75,10 @@ class App extends React.Component {
         function readNIFTI(name, data) {
             var mri_div = document.getElementById(mri_id);
             var canvas = document.createElement("canvas");
-            canvas.id = mri_canvas_id
-            canvas.style.margin = "auto"
+            canvas.id = mri_canvas_id;
+            canvas.style.margin = "auto";
+            canvas.style.width = '100%';
+            canvas.style.height = '100%';
             mri_div.append(canvas);
             // var canvas = document.getElementById(mri_canvas_id);
             var niftiHeader, niftiImage;
@@ -236,6 +238,8 @@ class App extends React.Component {
                 var canvas = tiff.toCanvas();
                 canvas.id = hist_canvas_id;
                 canvas.style.margin = "auto"
+                canvas.style.width = '100%';
+                canvas.style.height = '100%';
                 c.append(canvas);
                 let ctx = canvas.getContext("2d");
                 hist_data = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -547,7 +551,7 @@ class App extends React.Component {
         return (
             <div className='HolyGrail'>
                 <div>
-                    <h1>LaViolette Points</h1>
+                    <h1 style={{textAlign: "center"}} className="p-4">LaViolette Points</h1>
                 </div>
                 <div className='HolyGrail-body'>
                     <div className='nav'>
@@ -566,18 +570,16 @@ class App extends React.Component {
                                              promptStatement="Choose an MRI Image:"
                                              acceptedFile=".nii"/>
                             </div>
-                            <div className="d-flex justify-content-center w-100">
-                                <div className="row row-cols-2 d-flex w-100">
-                                    <FileSelect  onFileSelect={display_points}
-                                                 promptStatement="Choose Histology points:"
-                                                 acceptedFile=".csv"/>
-                                    {toggle_nums.length > 0 &&
-                                        <Switch id={mri_switch_id} handleClick={handleClick}
-                                                text={"Enable Editing Points"} className="col"/>
-                                    }
-                                    </div>
-                            </div>
-                            <div className="d-flex justify-content-center w-100">
+                            <div className="row row-cols-2">
+                                <FileSelect  onFileSelect={display_points}
+                                             promptStatement="Choose Histology points:"
+                                             acceptedFile=".csv"/>
+                                {toggle_nums.length > 0 &&
+                                    <Switch id={mri_switch_id} handleClick={handleClick}
+                                            text={"Enable Editing Points"} className="col"/>
+                                }
+                                </div>
+                            <div className="d-flex justify-content-center w-100 m-0">
                                 {toggle_nums.length > 0 &&
                                     <div className="row row-cols-2 d-flex w-100">
                                         <div className="col"/>
