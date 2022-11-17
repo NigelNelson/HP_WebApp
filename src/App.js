@@ -1,7 +1,3 @@
-// Class: SE2840 - Menu Filter
-// Name: YOUR NAME HERE
-// Class Section: N/A
-
 
 
 class App extends React.Component {
@@ -19,7 +15,8 @@ class App extends React.Component {
             mri_shapes: [],
             display_hist_points: [],
             display_mri_points: [],
-            toggle_nums: []
+            toggle_nums: [],
+            current_point_idx: 0
         };
     }
 
@@ -48,14 +45,39 @@ class App extends React.Component {
         const handlePointToggle = (num) => {
             this.setState({
                 display_mri_points: [this.state.mri_shapes[num]],
-                display_hist_points: [this.state.hist_shapes[num]]
+                display_hist_points: [this.state.hist_shapes[num]],
+                current_point_idx: num
             });
+        }
+
+        const handleNextPoint = () => {
+            let num_points = this.state.toggle_nums.length;
+            let point_idx = this.state.current_point_idx + 1;
+            if(point_idx < num_points){
+                this.setState({
+                    display_mri_points: [this.state.mri_shapes[point_idx]],
+                    display_hist_points: [this.state.hist_shapes[point_idx]],
+                    current_point_idx: point_idx
+                });
+            }
+        }
+
+        const handlePreviousPoint = () => {
+            let point_idx = this.state.current_point_idx - 1;
+            if(point_idx >= 0){
+                this.setState({
+                    display_mri_points: [this.state.mri_shapes[point_idx]],
+                    display_hist_points: [this.state.hist_shapes[point_idx]],
+                    current_point_idx: point_idx
+                });
+            }
         }
 
         const handleClickALl = () => {
             this.setState({
                 display_mri_points: this.state.mri_shapes,
-                display_hist_points: this.state.hist_shapes
+                display_hist_points: this.state.hist_shapes,
+                current_point_idx: 0
             });
         }
 
@@ -70,6 +92,40 @@ class App extends React.Component {
                     edit_mri_points: false
                 });
             }
+        }
+
+        /**
+         * Equalizes the histogram of an unsigned 1-channel image with values
+         * in range [0, 255]. Corresponds to the equalizeHist OpenCV function.
+         *
+         * @param {Array} src 1-channel source image
+         * result is written to src (faster)
+         * @return {Array} Destination image
+         */
+        const equalizeHistogram = (src) => {
+            var srcLength = src.length;
+            let dst = src;
+
+            // Compute histogram and histogram sum:
+            var hist = new Float32Array(256);
+            var sum = 0;
+            for (var i = 0; i < srcLength; ++i) {
+                ++hist[~~src[i]];
+                ++sum;
+            }
+
+            // Compute integral histogram:
+            var prev = hist[0];
+            for (var i = 1; i < 256; ++i) {
+                prev = hist[i] += prev;
+            }
+
+            // Equalize image:
+            var norm = 255 / sum;
+            for (var i = 0; i < srcLength; ++i) {
+                dst[i] = hist[~~src[i]] * norm;
+            }
+            return dst;
         }
 
         function readNIFTI(name, data) {
@@ -170,7 +226,11 @@ class App extends React.Component {
                     canvasImageData.data[(rowOffset + col) * 4 + 3] = 0xFF;
                 }
             }
-            ctx.putImageData(canvasImageData, 0, 0);
+
+            // Perform histogram equalization
+            let equalized_arr = new Uint8ClampedArray(equalizeHistogram(canvasImageData.data))
+            let equalized_img = new ImageData(equalized_arr, canvasImageData.width, canvasImageData.height);
+            ctx.putImageData(equalized_img, 0, 0);
 
             var tempCanvas = document.createElement("canvas");
             var tempCtx = tempCanvas.getContext("2d");
@@ -287,17 +347,23 @@ class App extends React.Component {
         }
 
         const drawCircle = (ctx, x, y, radius, fill, stroke, strokeWidth) => {
-            ctx.beginPath()
-            ctx.arc(x, y, radius, 0, 2 * Math.PI, false)
+            ctx.fillStyle = fill;
+            ctx.strokeStyle = stroke;
+            ctx.beginPath();
+            ctx.fillRect(x-1.5, y-1.5,3,3);
             if (fill) {
-                ctx.fillStyle = fill
                 ctx.fill()
             }
+            ctx.arc(x, y, radius + 2, 0, 2 * Math.PI, false);
             if (stroke) {
                 ctx.lineWidth = strokeWidth
-                ctx.strokeStyle = stroke
                 ctx.stroke()
             }
+        }
+
+        const selectColor = (number) => {
+            const hue = number * 137.508; // use golden angle approximation
+            return `hsl(${hue},100%,50%)`;
         }
 
         const display_points = () => {
@@ -314,21 +380,23 @@ class App extends React.Component {
                 var data = $.csv.toArrays(csv);
 
                 data.forEach(function (points){
-                    let hist_x = Number(points[0]);
-                    let hist_y = Number(points[1]);
-                    let mri_x = Number(points[2]);
-                    let mri_y = Number(points[3]);
+                    let hist_x = Number(points[1]);
+                    let hist_y = Number(points[0]);
+                    let mri_x = Number(points[3]);
+                    let mri_y = Number(points[2]);
 
                     let radius = 7;
                     let strokeWidth = 2;
-                    let fill = 'black';
+                    let fill = 'red';
                     let stroke = 'red';
 
-                    drawCircle(hist_context, hist_x, hist_y, radius, fill, stroke, strokeWidth);
-                    drawCircle(mri_context, mri_x, mri_y, radius, fill, stroke, strokeWidth);
+                    let color = selectColor(num_toggles);
 
-                    hist_shapes.push( {x:hist_x, y:hist_y, radius:radius, fill:fill, stroke:strokeWidth, strokeWith: strokeWidth} );
-                    mri_shapes.push( {x:mri_x, y:mri_y, radius:radius, fill:fill, stroke:stroke, strokeWith: strokeWidth} );
+                    drawCircle(hist_context, hist_x, hist_y, radius, color, color, strokeWidth);
+                    drawCircle(mri_context, mri_x, mri_y, radius, color, color, strokeWidth);
+
+                    hist_shapes.push( {x:hist_x, y:hist_y, radius:radius, fill:color, stroke:color, strokeWith: strokeWidth} );
+                    mri_shapes.push( {x:mri_x, y:mri_y, radius:radius, fill:color, stroke:color, strokeWith: strokeWidth} );
 
                     toggle_nums.push(num_toggles);
                     num_toggles = num_toggles + 1;
@@ -562,6 +630,12 @@ class App extends React.Component {
                                 <Image id={hist_id} className="col my-2 d-flex"/>
                                 <Image id={mri_id} className="col my-2 d-flex"/>
                             </div>
+                            {toggle_nums.length > 0 &&
+                                <div className="row row-cols-2 d-flex justify-content-center">
+                                    <BackButton onClick={handlePreviousPoint}/>
+                                    <ForwardButton onClick={handleNextPoint}/>
+                                </div>
+                            }
                             <div className="row row-cols-2">
                                 <FileSelect  onFileSelect={show_hist}
                                              promptStatement="Choose a Histology Image:"
