@@ -418,14 +418,14 @@ class App extends React.Component {
             var csv = "";
 
             for (let i = 0; i < hist_shapes.length; i++) {
-                csv += [hist_shapes[i].x, hist_shapes[i].y, mri_shapes[i].x, mri_shapes[i].y,].join(',');
+                csv += [hist_shapes[i].y, hist_shapes[i].x, mri_shapes[i].y, mri_shapes[i].x,].join(',');
                 csv += "\n";
             }
 
             var hiddenElement = document.createElement('a');
             hiddenElement.href = 'data:text/csv;charset=utf-8,' + encodeURI(csv);
             hiddenElement.target = '_blank';
-            hiddenElement.download = 'hist+mri_points.csv';
+            hiddenElement.download = 'corrected_histmri_points.csv';
             hiddenElement.click();
         }
 
@@ -606,6 +606,135 @@ class App extends React.Component {
             }
         }
 
+        const display_points_predicted = (data) => {
+            let mri_canvas = document.getElementById(mri_canvas_id);
+            let mri_context = mri_canvas.getContext('2d');
+
+            data.forEach(function (points){
+                let mri_x = Number(points[1]);
+                let mri_y = Number(points[0]);
+
+                let radius = 7;
+                let strokeWidth = 2;
+                let fill = 'red';
+                let stroke = 'red';
+
+                let color = selectColor(num_toggles);
+
+                drawCircle(mri_context, mri_x, mri_y, radius, color, color, strokeWidth);
+
+                mri_shapes.push( {x:mri_x, y:mri_y, radius:radius, fill:color, stroke:color, strokeWith: strokeWidth} );
+
+                toggle_nums.push(num_toggles);
+                num_toggles = num_toggles + 1;
+            })
+
+            display_mri_points = mri_shapes;
+            log_toggle_nums(toggle_nums);
+            log_display_points([], display_mri_points);
+
+            this.setState({
+                hist_shapes: [],
+                mri_shapes: mri_shapes,
+                toggle_nums: toggle_nums,
+            });
+        }
+
+        const display_hist_points_predicted = (data) => {
+            let hist_canvas = document.getElementById(hist_canvas_id);
+            let hist_context = hist_canvas.getContext('2d');
+
+            data.forEach(function (points){
+                let mri_x = Number(points[1]);
+                let mri_y = Number(points[0]);
+
+                let radius = 7;
+                let strokeWidth = 2;
+                let fill = 'red';
+                let stroke = 'red';
+
+                let color = selectColor(num_toggles);
+
+                drawCircle(hist_context, mri_x, mri_y, radius, color, color, strokeWidth);
+
+                mri_shapes.push( {x:mri_x, y:mri_y, radius:radius, fill:color, stroke:color, strokeWith: strokeWidth} );
+
+                toggle_nums.push(num_toggles);
+                num_toggles = num_toggles + 1;
+            })
+
+            display_hist_points = mri_shapes;
+            log_toggle_nums(toggle_nums);
+            log_display_points(display_hist_points, []);
+
+            this.setState({
+                hist_shapes: mri_shapes,
+                mri_shapes: [],
+                toggle_nums: toggle_nums,
+            });
+        }
+
+
+        async function predictPoints(e) {
+
+            const response = await fetch("http://localhost:5000/python", {
+                method: "post",
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+
+                //make sure to serialize your JSON body
+                body: JSON.stringify({
+                    model_path: "C:/Users/nelsonni/OneDrive - Milwaukee School of Engineering/Documents/Research/pls_work/models/model",
+                    hist_path: "C:/Users/nelsonni/OneDrive - Milwaukee School of Engineering/Documents/Research/Correct_Prostate_Points/Prostates/1102/8/small_recon_8_pgt_sharp (1).tiff",
+                    mri_path: "C:/Users/nelsonni/OneDrive - Milwaukee School of Engineering/Documents/Research/Correct_Prostate_Points/Prostates/1102/8/mri_slice_double_T2 (1).nii",
+                    points_path: "C:/Users/nelsonni/OneDrive - Milwaukee School of Engineering/Documents/Research/Correct_Prostate_Points/Prostates/1102/8/predicted_histmri_points (1).csv"
+                })
+            });
+            //const response = await fetch('http://localhost:5000/python');
+            const body = await response.json();
+
+            if (response.status !== 200) {
+                throw Error(body.message)
+            }
+            console.log(body);
+
+            let points = body.test;
+
+            display_points_predicted(points);
+
+
+        }
+
+        async function getSiftPoints(e) {
+
+            const response = await fetch("http://localhost:5000/sift", {
+                method: "post",
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+
+                //make sure to serialize your JSON body
+                body: JSON.stringify({
+                    hist_path: "C:/Users/nelsonni/OneDrive - Milwaukee School of Engineering/Documents/Research/Correct_Prostate_Points/Prostates/1102/8/small_recon_8_pgt_sharp (1).tiff"
+                })
+            });
+            //const response = await fetch('http://localhost:5000/python');
+            const body = await response.json();
+
+            if (response.status !== 200) {
+                throw Error(body.message)
+            }
+            console.log(body);
+
+            let points = body.test;
+
+            display_hist_points_predicted(points);
+
+        }
+
         // if(hist_data){
         //     hist_canvas.onmousedown = handleMouseDown;
         //     hist_canvas.onmousemove = handleMouseMove;
@@ -619,7 +748,7 @@ class App extends React.Component {
         return (
             <div className='HolyGrail'>
                 <div>
-                    <h1 style={{textAlign: "center"}} className="p-4">LaViolette Points</h1>
+                    <h1 style={{textAlign: "center"}} className="p-4">Homologous Point Transformer</h1>
                 </div>
                 <div className='HolyGrail-body'>
                     <div className='nav'>
@@ -654,10 +783,13 @@ class App extends React.Component {
                                 }
                                 </div>
                             <div className="d-flex justify-content-center w-100 m-0">
-                                {toggle_nums.length > 0 &&
+                                {toggle_nums.length + 1 > 0 &&
                                     <div className="row row-cols-2 d-flex w-100">
-                                        <div className="col"/>
                                         <div className="col">
+                                        </div>
+                                        <div className="col">
+                                            <SiftButton onClick={getSiftPoints}/>
+                                            <PredictButton onClick={predictPoints}/>
                                             <ToggleGroup toggle_nums={toggle_nums} handlePointToggle={handlePointToggle} handleClickAll={handleClickALl}/>
                                             <DownloadButton onClick={download_points} text={"Download Points"}/>
                                         </div>

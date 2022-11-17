@@ -1,0 +1,22 @@
+{
+  "name": "menufilter",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "npx babel -o public\\index.js src",
+    "start": "npx babel --watch -o public\\index.js src"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@babel/cli": "^7.16.8",
+    "@babel/core": "^7.16.12",
+    "@babel/preset-react": "^7.16.7",
+    "cors": "^2.8.5",
+    "express": "^4.17.2",
+    "react-images-uploading": "^3.1.6",
+    "react-loading-skeleton": "^3.1.0",
+    "tiff-to-png": "^2.0.2"
+  }
+}

@@ -1,4 +1,4 @@
-class PredictButton extends React.Component {
+class SiftButton extends React.Component {
     render() {
         return (
             <button type="button"
@@ -7,7 +7,7 @@ class PredictButton extends React.Component {
                     style={{maxHWidth: '200px',
                         marginTop: '10px',
                         marginBottom: '15px '}}>
-                Predict Points
+                Get Sift Points
             </button>
         )
     }

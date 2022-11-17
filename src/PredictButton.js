@@ -1,4 +1,4 @@
-class BackButton extends React.Component {
+class PredictButton extends React.Component {
     render() {
         return (
             <button type="button"
@@ -7,7 +7,7 @@ class BackButton extends React.Component {
                     style={{maxHWidth: '200px',
                         marginTop: '10px',
                         marginBottom: '15px '}}>
-                Previous Point
+                Predict Points
             </button>
         )
     }
