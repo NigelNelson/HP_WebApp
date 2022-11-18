@@ -426,7 +426,8 @@ class App extends React.Component {
       hiddenElement.target = '_blank';
       hiddenElement.download = 'corrected_histmri_points.csv';
       hiddenElement.click();
-    }; // given mouse X & Y (mx & my) and shape object
+    }; //////////////////// Functions Enabling Dragging and Dropping of Points //////////////////
+    // given mouse X & Y (mx & my) and shape object
     // return true/false whether mouse is inside the shape
 
 
@@ -603,9 +604,10 @@ class App extends React.Component {
         mri_canvas.onmouseup = null;
         mri_canvas.onmouseout = null;
       }
-    }
+    } //////////////////////////// Helper Functions For Python Scipt Responses  //////////////////////////
 
-    const display_points_predicted = data => {
+
+    const display_sift_hist_points = data => {
       let mri_canvas = document.getElementById(mri_canvas_id);
       let mri_context = mri_canvas.getContext('2d');
       data.forEach(function (points) {
@@ -638,7 +640,7 @@ class App extends React.Component {
       });
     };
 
-    const display_hist_points_predicted = data => {
+    const display_predicted_mri_points = data => {
       let hist_canvas = document.getElementById(hist_canvas_id);
       let hist_context = hist_canvas.getContext('2d');
       data.forEach(function (points) {
@@ -669,7 +671,8 @@ class App extends React.Component {
         mri_shapes: [],
         toggle_nums: toggle_nums
       });
-    };
+    }; //////////////////////////// Functions that Trigger Python Scripts //////////////////////////
+
 
     async function predictPoints(e) {
       const response = await fetch("http://localhost:5000/python", {
@@ -678,7 +681,7 @@ class App extends React.Component {
           'Accept': 'application/json',
           'Content-Type': 'application/json'
         },
-        //make sure to serialize your JSON body
+        // Hard Coded Values to be replaced with User Input
         body: JSON.stringify({
           model_path: "C:/Users/nelsonni/OneDrive - Milwaukee School of Engineering/Documents/Research/pls_work/models/model",
           hist_path: "C:/Users/nelsonni/OneDrive - Milwaukee School of Engineering/Documents/Research/Correct_Prostate_Points/Prostates/1102/8/small_recon_8_pgt_sharp (1).tiff",
@@ -695,7 +698,7 @@ class App extends React.Component {
 
       console.log(body);
       let points = body.test;
-      display_points_predicted(points);
+      display_sift_hist_points(points);
     }
 
     async function getSiftPoints(e) {
@@ -705,7 +708,7 @@ class App extends React.Component {
           'Accept': 'application/json',
           'Content-Type': 'application/json'
         },
-        //make sure to serialize your JSON body
+        // Hard Coded Values to be replaced with User Input
         body: JSON.stringify({
           hist_path: "C:/Users/nelsonni/OneDrive - Milwaukee School of Engineering/Documents/Research/Correct_Prostate_Points/Prostates/1102/8/small_recon_8_pgt_sharp (1).tiff"
         })
@@ -719,13 +722,8 @@ class App extends React.Component {
 
       console.log(body);
       let points = body.test;
-      display_hist_points_predicted(points);
-    } // if(hist_data){
-    //     hist_canvas.onmousedown = handleMouseDown;
-    //     hist_canvas.onmousemove = handleMouseMove;
-    //     hist_canvas.onmouseup = handleMouseUp;
-    //     hist_canvas.onmouseout = handleMouseOut;
-    // }
+      display_predicted_mri_points(points);
+    } /////////////////////// HTML Code to Construct React Components ////////////////////////////////
     // Render the application
 
 
