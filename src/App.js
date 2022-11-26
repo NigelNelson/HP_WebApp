@@ -11,27 +11,40 @@ class App extends React.Component {
             edit_mri_points: false,
             hist_shapes: [],
             mri_shapes: [],
+            pred_hist_shapes: [],
+            pred_mri_shapes: [],
             display_hist_points: [],
             display_mri_points: [],
             toggle_nums: [],
-            current_point_idx: 0
+            current_point_idx: 0,
+            hist_file: "",
+            mri_file: "",
+            hist_mri_points: []
         };
     }
 
     render() {
-        const hist_id = 'hist_img'
-        const mri_id = 'mri_img'
-        const hist_canvas_id = 'hist_canvas'
-        const mri_canvas_id = 'mri_canvas'
+        const hist_id = 'hist_img';
+        const mri_id = 'mri_img';
+        const hist_canvas_id = 'hist_canvas';
+        const mri_canvas_id = 'mri_canvas';
+        const predict_id = 'predict_btn';
+
+        let hist_mri_points = this.state.hist_mri_points;
 
         let hist_data = this.state.hist_data;
         let mri_data = this.state.mri_data;
+
+        let hist_file = this.state.hist_file;
+        let mri_file = this.state.mri_file;
 
         var mri_canvas = document.getElementById(mri_canvas_id);
         var hist_canvas = document.getElementById(hist_canvas_id);
 
         var mri_shapes = this.state.mri_shapes;
         var hist_shapes = this.state.hist_shapes;
+        let pred_mri_shapes = this.state.pred_mri_shapes;
+        let pred_hist_shapes = this.state.pred_hist_shapes;
         var display_hist_points = this.state.display_hist_points;
         var display_mri_points = this.state.display_mri_points;
 
@@ -244,7 +257,8 @@ class App extends React.Component {
             ctx.drawImage(tempCanvas, 0, 0, tempCanvas.width, -tempCanvas.height);
             ctx.restore();
             mri_data = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            log_mri_data(mri_data);
+            let mri_file = canvas.toDataURL("image/png");
+            log_mri_data(mri_data, mri_file);
         }
 
         function makeSlice(file, start, length) {
@@ -300,24 +314,35 @@ class App extends React.Component {
                 c.append(canvas);
                 let ctx = canvas.getContext("2d");
                 hist_data = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                log_hist_data(hist_data);
+                const byte_img = tiff.toDataURL();
+                log_hist_data(hist_data, byte_img);
             };
             xhr.send();
+
 
             this.setState({
                 is_hist_loaded: true
             });
         }
 
-        const log_mri_data = (data) => {
+
+        const log_mri_data = (data, file) => {
             this.setState({
-                mri_data: data
+                mri_data: data,
+                mri_file: file
             });
         }
 
-        const log_hist_data = (data) => {
+        const log_points = (data) => {
             this.setState({
-                hist_data: data
+                hist_mri_points: data
+            });
+        }
+
+        const log_hist_data = (data, byte_img) => {
+            this.setState({
+                hist_data: data,
+                hist_file: byte_img
             });
         }
 
@@ -401,6 +426,7 @@ class App extends React.Component {
 
                 display_mri_points = mri_shapes;
                 display_hist_points = hist_shapes;
+                log_points(data);
                 log_toggle_nums(toggle_nums);
                 log_display_points(display_hist_points, display_mri_points);
             }
@@ -612,6 +638,9 @@ class App extends React.Component {
             let mri_canvas = document.getElementById(mri_canvas_id);
             let mri_context = mri_canvas.getContext('2d');
 
+            mri_shapes = []
+            num_toggles = 0
+
             data.forEach(function (points){
                 let mri_x = Number(points[1]);
                 let mri_y = Number(points[0]);
@@ -633,10 +662,9 @@ class App extends React.Component {
 
             display_mri_points = mri_shapes;
             log_toggle_nums(toggle_nums);
-            log_display_points([], display_mri_points);
+            log_display_points(display_hist_points, display_mri_points);
 
             this.setState({
-                hist_shapes: [],
                 mri_shapes: mri_shapes,
                 toggle_nums: toggle_nums,
             });
@@ -681,6 +709,9 @@ class App extends React.Component {
 
 
         async function predictPoints(e) {
+            log_display_points(display_hist_points, []);
+            let predict_btn = document.getElementById(predict_id);
+            predict_btn.disabled = true;
 
             const response = await fetch("http://localhost:5000/python", {
                 method: "post",
@@ -690,11 +721,17 @@ class App extends React.Component {
                 },
 
                 // Hard Coded Values to be replaced with User Input
+                // body: JSON.stringify({
+                //     model_path: "C:/Users/nelsonni/OneDrive - Milwaukee School of Engineering/Documents/Research/pls_work/models/model",
+                //     hist_path: hist_file,
+                //     mri_path: mri_file,
+                //     points_path: "C:/Users/nelsonni/OneDrive - Milwaukee School of Engineering/Documents/Research/Correct_Prostate_Points/Prostates/1102/8/predicted_histmri_points (1).csv"
+                // })
                 body: JSON.stringify({
                     model_path: "C:/Users/nelsonni/OneDrive - Milwaukee School of Engineering/Documents/Research/pls_work/models/model",
-                    hist_path: "C:/Users/nelsonni/OneDrive - Milwaukee School of Engineering/Documents/Research/Correct_Prostate_Points/Prostates/1102/8/small_recon_8_pgt_sharp (1).tiff",
-                    mri_path: "C:/Users/nelsonni/OneDrive - Milwaukee School of Engineering/Documents/Research/Correct_Prostate_Points/Prostates/1102/8/mri_slice_double_T2 (1).nii",
-                    points_path: "C:/Users/nelsonni/OneDrive - Milwaukee School of Engineering/Documents/Research/Correct_Prostate_Points/Prostates/1102/8/predicted_histmri_points (1).csv"
+                    hist_path: hist_file,
+                    mri_path: mri_file,
+                    points_path: hist_mri_points
                 })
             });
             //const response = await fetch('http://localhost:5000/python');
@@ -708,6 +745,7 @@ class App extends React.Component {
             let points = body.test;
 
             display_sift_hist_points(points);
+            predict_btn.disabled = false;
 
 
         }
@@ -723,7 +761,7 @@ class App extends React.Component {
 
                 // Hard Coded Values to be replaced with User Input
                 body: JSON.stringify({
-                    hist_path: "C:/Users/nelsonni/OneDrive - Milwaukee School of Engineering/Documents/Research/Correct_Prostate_Points/Prostates/1102/8/small_recon_8_pgt_sharp (1).tiff"
+                    hist_path: hist_file
                 })
             });
             //const response = await fetch('http://localhost:5000/python');
@@ -735,6 +773,29 @@ class App extends React.Component {
             console.log(body);
 
             let points = body.test;
+
+            display_predicted_mri_points(points);
+
+        }
+
+        async function getHistFile(e) {
+
+            const response = await fetch("http://localhost:5000/getHist", {
+                method: "post",
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            });
+            //const response = await fetch('http://localhost:5000/python');
+            const body = await response.json();
+
+            if (response.status !== 200) {
+                throw Error(body.message)
+            }
+            console.log(body.hist_path);
+
+            let points = body.hist_path;
 
             display_predicted_mri_points(points);
 
@@ -787,7 +848,7 @@ class App extends React.Component {
                                         </div>
                                         <div className="col">
                                             <SiftButton onClick={getSiftPoints}/>
-                                            <PredictButton onClick={predictPoints}/>
+                                            <PredictButton onClick={predictPoints} id={predict_id}/>
                                             <ToggleGroup toggle_nums={toggle_nums} handlePointToggle={handlePointToggle} handleClickAll={handleClickALl}/>
                                             <DownloadButton onClick={download_points} text={"Download Points"}/>
                                         </div>

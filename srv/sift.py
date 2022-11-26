@@ -2,6 +2,8 @@
 # Warning: points are treated as <col, row> pairs
 from contextlib import contextmanager
 import sys, os
+from io import BytesIO
+import base64
 
 @contextmanager
 def suppress_stdout():
@@ -21,6 +23,7 @@ from scipy.spatial import distance_matrix
 from functools import cmp_to_key
 import numpy as np
 import logging
+from urllib.request import urlopen
 
 def filter_points(points, img, window_rad=2):
     """
@@ -413,7 +416,13 @@ def convertKeypointsToInputImageSize(keypoints):
 
 def load_histology(filepath):
     """Loads the histology as a grayscale 2D float32 array of range [0, 1]"""
-    hist = cv2.imread(filepath, cv2.IMREAD_UNCHANGED)
+    #hist = cv2.imread(filepath, cv2.IMREAD_UNCHANGED)
+#     resp = urlopen(filepath)
+    x = filepath.split(',')[1]
+    img_bytes = base64.b64decode(x)
+    hist = cv2.imdecode(np.frombuffer(BytesIO(img_bytes).read(), np.uint8), cv2.IMREAD_UNCHANGED)
+    #image = np.asarray(bytearray(filepath), dtype="uint8")
+    #image = np.asarray([eval(c) for c in filepath.split(',')], dtype="uint8")
     if hist.shape[0] != 512 or hist.shape[1] != 512:
         hist = cv2.resize(hist, (512, 512), interpolation=cv2.INTER_AREA)
     if len(hist.shape) == 3:
@@ -422,7 +431,8 @@ def load_histology(filepath):
 
  #################################################################################################
 
-hist_path = sys.argv[1]
+#hist_path = sys.argv[1]
+hist_path = input()
 
 with suppress_stdout():
  hist = load_histology(hist_path)
@@ -430,4 +440,6 @@ with suppress_stdout():
  hist_points = compute_points(hist * 255, dist_thresh=40)
 
 print(json.dumps(hist_points))
+
+
 sys.stdout.flush()

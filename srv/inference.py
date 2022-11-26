@@ -1,5 +1,7 @@
 from contextlib import contextmanager
+from io import BytesIO
 import sys, os
+import base64
 
 @contextmanager
 def suppress_stdout():
@@ -20,6 +22,7 @@ import warnings
 import tensorflow as tf
 import math
 import json
+from urllib.request import urlopen
 
 from layers import AddOnes, ImagePatchEncoder3, SquareBased, DotProductCorrelation, L2Norm, ModelToggle, loss, HardCodedPositions, ActivePointMaskMultiplication, EdgePointAugmentation, RangeOut, ImagePatchEncoder2, ActivePointMask, GatherPatches, TiledCorrelation3D, PointTranslation, Correlation3D, GrayscaleToRGB, ProjectPoints, Patches, PositionEncoder, ModalityEncoder, PointPatchEncoder, PointAttentionMask, ImagePatchEncoder, ExpandToBatch, ReduceAttentionScores, EinsumDense, MultiHeadAttention, Softmax, gelu
 
@@ -114,13 +117,19 @@ def load_model(path, use_weights=True):
 def load_mri(filepath):
     """Loads MRI nii file returns a 2D float 32 array of range [0, 1]"""
     warnings.filterwarnings('ignore')
-    mri = nib.load(filepath).get_fdata()
+    x = filepath.split(',')[1]
+    img_bytes = base64.b64decode(x)
+    mri = cv2.imdecode(np.frombuffer(BytesIO(img_bytes).read(), np.uint8), cv2.IMREAD_UNCHANGED)
+#     mri = nib.load(filepath).get_fdata()
     temp = mri - np.min(mri)
     return (temp / (1 if np.max(temp) == 0 else np.max(temp))).astype(np.float32)
 
 def load_histology(filepath):
     """Loads the histology as a grayscale 2D float32 array of range [0, 1]"""
-    hist = cv2.imread(filepath, cv2.IMREAD_UNCHANGED)
+#     hist = cv2.imread(filepath, cv2.IMREAD_UNCHANGED)
+    x = filepath.split(',')[1]
+    img_bytes = base64.b64decode(x)
+    hist = cv2.imdecode(np.frombuffer(BytesIO(img_bytes).read(), np.uint8), cv2.IMREAD_UNCHANGED)
     if hist.shape[0] != 512 or hist.shape[1] != 512:
         hist = cv2.resize(hist, (512, 512), interpolation=cv2.INTER_AREA)
     if len(hist.shape) == 3:
@@ -311,17 +320,27 @@ def batch_predict(model, fixed, moving, points, num_points=75):
     return model.predict([fixed_reshaped, moving_reshaped, padded_points, np.zeros((1,1), dtype=np.int32), np.ones((1,1), dtype=np.int32)]).reshape((-1, 2))[:len(points)]
 
 #####################################################################################################################
-assert len(sys.argv) == 5
+assert len(sys.argv) == 2
 
 model_path = sys.argv[1]
-hist_path = sys.argv[2]
-mri_path = sys.argv[3]
-points_path = sys.argv[4]
+# points_path = sys.argv[2]
+
+hist_path = input()
+mri_path = input()
+points = input()
+nums = [eval(x) for x in points.split(',')]
+new_nums = np.array(nums).reshape([-1, 4]).astype(int)
+
+hist_points = np.array(new_nums[:, :2])
+mri_points = np.array(new_nums[:, 2:])
+
+# hist_points = np.flip(new_nums[:, :2], axis=-1)
+# mri_points = np.flip(new_nums[:, 2:], axis=-1)
 
 with suppress_stdout():
     model = load_model(model_path, use_weights=False)
-
-    hist_points, mri_points = load_points(points_path)
+#
+#     hist_points2, mri_points2 = load_points("C:/Users/nelsonni/OneDrive - Milwaukee School of Engineering/Documents/Research/Correct_Prostate_Points/Prostates/1102/8/corrected_histmri_points.csv")
 
 
     data_dict = {
@@ -332,8 +351,12 @@ with suppress_stdout():
             }
 
 
+
     input_points = filter_points(hist_points, data_dict["grayscale_hist"])
     input_points = input_points[:75, :]
+
+#     input_points2 = filter_points(hist_points2, data_dict["grayscale_hist"])
+#     input_points2 = input_points2[:75, :]
 
     fixed_image = data_dict["grayscale_hist"]
     moving_image = data_dict["unmasked_mri"]
@@ -346,6 +369,17 @@ with suppress_stdout():
     output_points = batch_predict(model, fixed_image, moving_image, input_points)
 
     output_points = reverse_center_prostate(data_dict["unmasked_mri"], output_points, padding=scale_pad, mask_points=data_dict["mri_points"])
+
+
+
+#     fixed_image2, input_points2, _ = center_prostate(data_dict["grayscale_hist"], input_points2, other=None, padding=scale_pad, mask_points=hist_points2)
+#     _, _, moving_image2 = center_prostate(data_dict["unmasked_mri"], mri_points2, other=data_dict["unmasked_mri"], padding=scale_pad)
+#
+#     output_points2 = batch_predict(model, fixed_image2, moving_image2, input_points2)
+#
+#     output_points2 = reverse_center_prostate(data_dict["unmasked_mri"], output_points2, padding=scale_pad, mask_points=mri_points2)
+
+# print(json.dumps(output_points.tolist()))
 
 print(json.dumps(output_points.tolist()))
 sys.stdout.flush()

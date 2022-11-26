@@ -2,6 +2,7 @@ class PredictButton extends React.Component {
     render() {
         return (
             <button type="button"
+                    id={this.props.id}
                     className="btn btn-primary w-25 border border-dark"
                     onClick={this.props.onClick}
                     style={{maxHWidth: '200px',
