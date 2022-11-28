@@ -5,7 +5,7 @@ var bodyParser = require('body-parser')
 const app = express(); //Line 2
 const port = process.env.PORT || 5000; //Line 3
 
-let points = [];
+// let sift_points = [];
 
 app.use(cors())
 
@@ -23,12 +23,13 @@ app.post('/python', (req, res) => {
     let mri_path = req.body.mri_path;
     let hist_path = req.body.hist_path;
     let points_path = req.body.points_path;
+    let sift_points = req.body.sift_points;
 
-    console.log(points_path);
+    console.log(sift_points);
 
     const process = spawn('python',["inference.py", model_path]);
 
-    process.stdin.write(hist_path + '\n' + mri_path + '\n' + points_path);
+    process.stdin.write(hist_path + '\n' + mri_path + '\n' + points_path + '\n' + sift_points);
     process.stdin.end();
 
     console.log("spawned");

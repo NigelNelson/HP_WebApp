@@ -2,7 +2,7 @@ class DownloadButton extends React.Component {
     render() {
         return (
             <button type="button"
-                    className="btn btn-primary w-50"
+                    className="btn btn-primary w-100"
                     onClick={this.props.onClick}
                     style={{maxHWidth: '200px',
                             marginTop: '10px',

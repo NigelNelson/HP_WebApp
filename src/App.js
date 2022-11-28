@@ -19,7 +19,8 @@ class App extends React.Component {
             current_point_idx: 0,
             hist_file: "",
             mri_file: "",
-            hist_mri_points: []
+            hist_mri_points: [],
+            sift_points: []
         };
     }
 
@@ -37,6 +38,7 @@ class App extends React.Component {
 
         let hist_file = this.state.hist_file;
         let mri_file = this.state.mri_file;
+        let sift_points = this.state.sift_points;
 
         var mri_canvas = document.getElementById(mri_canvas_id);
         var hist_canvas = document.getElementById(hist_canvas_id);
@@ -339,6 +341,12 @@ class App extends React.Component {
             });
         }
 
+        const log_sift_points = (data) => {
+            this.setState({
+                sift_points: data
+            });
+        }
+
         const log_hist_data = (data, byte_img) => {
             this.setState({
                 hist_data: data,
@@ -401,28 +409,45 @@ class App extends React.Component {
                 var csv = event.target.result;
                 var data = $.csv.toArrays(csv);
 
-                data.forEach(function (points){
-                    let hist_x = Number(points[1]);
-                    let hist_y = Number(points[0]);
-                    let mri_x = Number(points[3]);
-                    let mri_y = Number(points[2]);
+                if(sift_points.length < 1) {
 
-                    let radius = 7;
-                    let strokeWidth = 2;
-                    let fill = 'red';
-                    let stroke = 'red';
+                    data.forEach(function (points) {
+                        let hist_x = Number(points[1]);
+                        let hist_y = Number(points[0]);
+                        let mri_x = Number(points[3]);
+                        let mri_y = Number(points[2]);
 
-                    let color = selectColor(num_toggles);
+                        let radius = 7;
+                        let strokeWidth = 2;
+                        let fill = 'red';
+                        let stroke = 'red';
 
-                    drawCircle(hist_context, hist_x, hist_y, radius, color, color, strokeWidth);
-                    drawCircle(mri_context, mri_x, mri_y, radius, color, color, strokeWidth);
+                        let color = selectColor(num_toggles);
 
-                    hist_shapes.push( {x:hist_x, y:hist_y, radius:radius, fill:color, stroke:color, strokeWith: strokeWidth} );
-                    mri_shapes.push( {x:mri_x, y:mri_y, radius:radius, fill:color, stroke:color, strokeWith: strokeWidth} );
+                        drawCircle(hist_context, hist_x, hist_y, radius, color, color, strokeWidth);
+                        drawCircle(mri_context, mri_x, mri_y, radius, color, color, strokeWidth);
 
-                    toggle_nums.push(num_toggles);
-                    num_toggles = num_toggles + 1;
-                })
+                        hist_shapes.push({
+                            x: hist_x,
+                            y: hist_y,
+                            radius: radius,
+                            fill: color,
+                            stroke: color,
+                            strokeWith: strokeWidth
+                        });
+                        mri_shapes.push({
+                            x: mri_x,
+                            y: mri_y,
+                            radius: radius,
+                            fill: color,
+                            stroke: color,
+                            strokeWith: strokeWidth
+                        });
+
+                        toggle_nums.push(num_toggles);
+                        num_toggles = num_toggles + 1;
+                    })
+                }
 
                 display_mri_points = mri_shapes;
                 display_hist_points = hist_shapes;
@@ -711,7 +736,7 @@ class App extends React.Component {
         async function predictPoints(e) {
             log_display_points(display_hist_points, []);
             let predict_btn = document.getElementById(predict_id);
-            predict_btn.disabled = true;
+            // predict_btn.disabled = true;
 
             const response = await fetch("http://localhost:5000/python", {
                 method: "post",
@@ -731,7 +756,8 @@ class App extends React.Component {
                     model_path: "C:/Users/nelsonni/OneDrive - Milwaukee School of Engineering/Documents/Research/pls_work/models/model",
                     hist_path: hist_file,
                     mri_path: mri_file,
-                    points_path: hist_mri_points
+                    points_path: hist_mri_points,
+                    sift_points: sift_points
                 })
             });
             //const response = await fetch('http://localhost:5000/python');
@@ -775,6 +801,8 @@ class App extends React.Component {
             let points = body.test;
 
             display_predicted_mri_points(points);
+            log_sift_points(points);
+
 
         }
 
@@ -810,10 +838,27 @@ class App extends React.Component {
                     <h1 style={{textAlign: "center"}} className="p-4">Homologous Point Transformer</h1>
                 </div>
                 <div className='HolyGrail-body'>
-                    <div className='nav'>
-                    </div>
+                        <div className="HolyGrail-nav container" style={{width: '150px'}}>
+                            {hist_data && mri_data &&
+                                <div className="row row-cols-2">
+                                    <SiftButton onClick={getSiftPoints}/>
+                                    <PredictButton onClick={predictPoints} id={predict_id}/>
+                                </div>
+                            }
+                                    {toggle_nums.length > 0 &&
+                                        <div className="m-0 p -0">
+                                            <div className="row row-cols-1">
+                                            <ToggleGroup toggle_nums={toggle_nums} handlePointToggle={handlePointToggle} handleClickAll={handleClickALl}/>
+                                            </div>
+                                            <div className="row row-cols-1">
+                                            <DownloadButton onClick={download_points} text={"Download Points"}/>
+                                            </div>
+                                        </div>
+                                    }
+
+                        </div>
                     <div className='HolyGrail-content'>
-                        <div className="container">
+                        <div className="container p-0 m-0">
                             <div className="row row-cols-2 d-flex justify-content-center">
                                 <Image id={hist_id} className="col my-2 d-flex"/>
                                 <Image id={mri_id} className="col my-2 d-flex"/>
@@ -836,26 +881,14 @@ class App extends React.Component {
                                 <FileSelect  onFileSelect={display_points}
                                              promptStatement="Choose Histology points:"
                                              acceptedFile=".csv"/>
-                                {toggle_nums.length > 0 &&
-                                    <Switch id={mri_switch_id} handleClick={handleClick}
-                                            text={"Enable Editing Points"} className="col"/>
-                                }
-                                </div>
-                            <div className="d-flex justify-content-center w-100 m-0">
-                                {toggle_nums.length + 1 > 0 &&
-                                    <div className="row row-cols-2 d-flex w-100">
-                                        <div className="col">
-                                        </div>
-                                        <div className="col">
-                                            <SiftButton onClick={getSiftPoints}/>
-                                            <PredictButton onClick={predictPoints} id={predict_id}/>
-                                            <ToggleGroup toggle_nums={toggle_nums} handlePointToggle={handlePointToggle} handleClickAll={handleClickALl}/>
-                                            <DownloadButton onClick={download_points} text={"Download Points"}/>
-                                        </div>
-                                    </div>
-                                }
                             </div>
                         </div>
+                    </div>
+                    <div className="HolyGrail-right">
+                        {toggle_nums.length > 0 &&
+                            <Switch id={mri_switch_id} handleClick={handleClick}
+                                    text={"Enable Editing Points"} className="col"/>
+                        }
                     </div>
                 </div>
             </div>

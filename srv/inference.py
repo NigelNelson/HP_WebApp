@@ -328,11 +328,20 @@ model_path = sys.argv[1]
 hist_path = input()
 mri_path = input()
 points = input()
+sift_points = input()
 nums = [eval(x) for x in points.split(',')]
 new_nums = np.array(nums).reshape([-1, 4]).astype(int)
 
 hist_points = np.array(new_nums[:, :2])
 mri_points = np.array(new_nums[:, 2:])
+
+use_sift = False
+if len(sift_points.split(',')) > 1:
+    use_sift = True
+
+nums = [eval(x) for x in sift_points.split(',')]
+sift_points = np.array(nums).reshape([-1, 2]).astype(int)
+
 
 # hist_points = np.flip(new_nums[:, :2], axis=-1)
 # mri_points = np.flip(new_nums[:, 2:], axis=-1)
@@ -351,9 +360,12 @@ with suppress_stdout():
             }
 
 
-
-    input_points = filter_points(hist_points, data_dict["grayscale_hist"])
-    input_points = input_points[:75, :]
+    input_points = []
+    if use_sift:
+        input_points = sift_points
+    else:
+        input_points = filter_points(hist_points, data_dict["grayscale_hist"])
+        input_points = input_points[:75, :]
 
 #     input_points2 = filter_points(hist_points2, data_dict["grayscale_hist"])
 #     input_points2 = input_points2[:75, :]

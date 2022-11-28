@@ -18,15 +18,25 @@
 
 /* Styling for the content item i.e. the item in between the 'nav' and the 'right' pane */
 .HolyGrail-content {
-    flex-grow: 1;           /* Force the main content to be full width by setting it's grow value to be larger than
+    flex-grow: 1;
+    padding-left: 0em;/* Force the main content to be full width by setting it's grow value to be larger than
                                   the 'nav' and 'right' panes */
 }
 
 /* Styling for the 'nav' and 'right' panes - force them to a specific size and don't let them grow or shrink */
-.HolyGrail-nav, .HolyGrail-right {
+.HolyGrail-nav {
     flex-grow: 0;      /* Do not grow with respect to the main content */
     flex-shrink: 0;    /* Do not shrink with respect to the main content */
     flex-basis: 15em;  /* 12em is the width of the columns */
+    margin-left: 3em;
+    margin-top: 1em;
+}
+.HolyGrail-right{
+    flex-grow: 0;      /* Do not grow with respect to the main content */
+    flex-shrink: 0;    /* Do not shrink with respect to the main content */
+    flex-basis: 15em;  /* 12em is the width of the columns */
+    margin-right: 3.2em;
+    padding-left: 0em;
 }
 
 .HolyGrail-nav {

@@ -18,7 +18,8 @@ class App extends React.Component {
       current_point_idx: 0,
       hist_file: "",
       mri_file: "",
-      hist_mri_points: []
+      hist_mri_points: [],
+      sift_points: []
     };
   }
 
@@ -33,6 +34,7 @@ class App extends React.Component {
     let mri_data = this.state.mri_data;
     let hist_file = this.state.hist_file;
     let mri_file = this.state.mri_file;
+    let sift_points = this.state.sift_points;
     var mri_canvas = document.getElementById(mri_canvas_id);
     var hist_canvas = document.getElementById(hist_canvas_id);
     var mri_shapes = this.state.mri_shapes;
@@ -326,6 +328,12 @@ class App extends React.Component {
       });
     };
 
+    const log_sift_points = data => {
+      this.setState({
+        sift_points: data
+      });
+    };
+
     const log_hist_data = (data, byte_img) => {
       this.setState({
         hist_data: data,
@@ -390,37 +398,41 @@ class App extends React.Component {
       reader.onload = function (event) {
         var csv = event.target.result;
         var data = $.csv.toArrays(csv);
-        data.forEach(function (points) {
-          let hist_x = Number(points[1]);
-          let hist_y = Number(points[0]);
-          let mri_x = Number(points[3]);
-          let mri_y = Number(points[2]);
-          let radius = 7;
-          let strokeWidth = 2;
-          let fill = 'red';
-          let stroke = 'red';
-          let color = selectColor(num_toggles);
-          drawCircle(hist_context, hist_x, hist_y, radius, color, color, strokeWidth);
-          drawCircle(mri_context, mri_x, mri_y, radius, color, color, strokeWidth);
-          hist_shapes.push({
-            x: hist_x,
-            y: hist_y,
-            radius: radius,
-            fill: color,
-            stroke: color,
-            strokeWith: strokeWidth
+
+        if (sift_points.length < 1) {
+          data.forEach(function (points) {
+            let hist_x = Number(points[1]);
+            let hist_y = Number(points[0]);
+            let mri_x = Number(points[3]);
+            let mri_y = Number(points[2]);
+            let radius = 7;
+            let strokeWidth = 2;
+            let fill = 'red';
+            let stroke = 'red';
+            let color = selectColor(num_toggles);
+            drawCircle(hist_context, hist_x, hist_y, radius, color, color, strokeWidth);
+            drawCircle(mri_context, mri_x, mri_y, radius, color, color, strokeWidth);
+            hist_shapes.push({
+              x: hist_x,
+              y: hist_y,
+              radius: radius,
+              fill: color,
+              stroke: color,
+              strokeWith: strokeWidth
+            });
+            mri_shapes.push({
+              x: mri_x,
+              y: mri_y,
+              radius: radius,
+              fill: color,
+              stroke: color,
+              strokeWith: strokeWidth
+            });
+            toggle_nums.push(num_toggles);
+            num_toggles = num_toggles + 1;
           });
-          mri_shapes.push({
-            x: mri_x,
-            y: mri_y,
-            radius: radius,
-            fill: color,
-            stroke: color,
-            strokeWith: strokeWidth
-          });
-          toggle_nums.push(num_toggles);
-          num_toggles = num_toggles + 1;
-        });
+        }
+
         display_mri_points = mri_shapes;
         display_hist_points = hist_shapes;
         log_points(data);
@@ -699,8 +711,8 @@ class App extends React.Component {
 
     async function predictPoints(e) {
       log_display_points(display_hist_points, []);
-      let predict_btn = document.getElementById(predict_id);
-      predict_btn.disabled = true;
+      let predict_btn = document.getElementById(predict_id); // predict_btn.disabled = true;
+
       const response = await fetch("http://localhost:5000/python", {
         method: "post",
         headers: {
@@ -718,7 +730,8 @@ class App extends React.Component {
           model_path: "C:/Users/nelsonni/OneDrive - Milwaukee School of Engineering/Documents/Research/pls_work/models/model",
           hist_path: hist_file,
           mri_path: mri_file,
-          points_path: hist_mri_points
+          points_path: hist_mri_points,
+          sift_points: sift_points
         })
       }); //const response = await fetch('http://localhost:5000/python');
 
@@ -756,6 +769,7 @@ class App extends React.Component {
       console.log(body);
       let points = body.test;
       display_predicted_mri_points(points);
+      log_sift_points(points);
     }
 
     async function getHistFile(e) {
@@ -790,11 +804,34 @@ class App extends React.Component {
     }, "Homologous Point Transformer")), /*#__PURE__*/React.createElement("div", {
       className: "HolyGrail-body"
     }, /*#__PURE__*/React.createElement("div", {
-      className: "nav"
-    }), /*#__PURE__*/React.createElement("div", {
+      className: "HolyGrail-nav container",
+      style: {
+        width: '150px'
+      }
+    }, hist_data && mri_data && /*#__PURE__*/React.createElement("div", {
+      className: "row row-cols-2"
+    }, /*#__PURE__*/React.createElement(SiftButton, {
+      onClick: getSiftPoints
+    }), /*#__PURE__*/React.createElement(PredictButton, {
+      onClick: predictPoints,
+      id: predict_id
+    })), toggle_nums.length > 0 && /*#__PURE__*/React.createElement("div", {
+      className: "m-0 p -0"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "row row-cols-1"
+    }, /*#__PURE__*/React.createElement(ToggleGroup, {
+      toggle_nums: toggle_nums,
+      handlePointToggle: handlePointToggle,
+      handleClickAll: handleClickALl
+    })), /*#__PURE__*/React.createElement("div", {
+      className: "row row-cols-1"
+    }, /*#__PURE__*/React.createElement(DownloadButton, {
+      onClick: download_points,
+      text: "Download Points"
+    })))), /*#__PURE__*/React.createElement("div", {
       className: "HolyGrail-content"
     }, /*#__PURE__*/React.createElement("div", {
-      className: "container"
+      className: "container p-0 m-0"
     }, /*#__PURE__*/React.createElement("div", {
       className: "row row-cols-2 d-flex justify-content-center"
     }, /*#__PURE__*/React.createElement(Image, {
@@ -825,32 +862,14 @@ class App extends React.Component {
       onFileSelect: display_points,
       promptStatement: "Choose Histology points:",
       acceptedFile: ".csv"
-    }), toggle_nums.length > 0 && /*#__PURE__*/React.createElement(Switch, {
+    })))), /*#__PURE__*/React.createElement("div", {
+      className: "HolyGrail-right"
+    }, toggle_nums.length > 0 && /*#__PURE__*/React.createElement(Switch, {
       id: mri_switch_id,
       handleClick: handleClick,
       text: "Enable Editing Points",
       className: "col"
-    })), /*#__PURE__*/React.createElement("div", {
-      className: "d-flex justify-content-center w-100 m-0"
-    }, toggle_nums.length + 1 > 0 && /*#__PURE__*/React.createElement("div", {
-      className: "row row-cols-2 d-flex w-100"
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "col"
-    }), /*#__PURE__*/React.createElement("div", {
-      className: "col"
-    }, /*#__PURE__*/React.createElement(SiftButton, {
-      onClick: getSiftPoints
-    }), /*#__PURE__*/React.createElement(PredictButton, {
-      onClick: predictPoints,
-      id: predict_id
-    }), /*#__PURE__*/React.createElement(ToggleGroup, {
-      toggle_nums: toggle_nums,
-      handlePointToggle: handlePointToggle,
-      handleClickAll: handleClickALl
-    }), /*#__PURE__*/React.createElement(DownloadButton, {
-      onClick: download_points,
-      text: "Download Points"
-    }))))))));
+    }))));
   }
 
 }
@@ -894,7 +913,7 @@ class DownloadButton extends React.Component {
   render() {
     return /*#__PURE__*/React.createElement("button", {
       type: "button",
-      className: "btn btn-primary w-50",
+      className: "btn btn-primary w-100",
       onClick: this.props.onClick,
       style: {
         maxHWidth: '200px',
@@ -1013,7 +1032,7 @@ class PredictButton extends React.Component {
     return /*#__PURE__*/React.createElement("button", {
       type: "button",
       id: this.props.id,
-      className: "btn btn-primary w-25 border border-dark",
+      className: "btn btn-primary w-50 border border-dark",
       onClick: this.props.onClick,
       style: {
         maxHWidth: '200px',
@@ -1028,7 +1047,7 @@ class SiftButton extends React.Component {
   render() {
     return /*#__PURE__*/React.createElement("button", {
       type: "button",
-      className: "btn btn-primary w-25 border border-dark",
+      className: "btn btn-primary w-50 border border-dark",
       onClick: this.props.onClick,
       style: {
         maxHWidth: '200px',
@@ -1067,11 +1086,11 @@ class Switch extends React.Component {
 }
 class ToggleGroup extends React.Component {
   render() {
-    return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-      className: "row row-cols-1 w-50 mx-1",
+    return /*#__PURE__*/React.createElement("div", {
+      className: "row row-cols-1 w-100 mx-0 p-0",
       style: {
         overflowX: 'auto',
-        maxHeight: '250px',
+        maxHeight: '370px',
         outlineStyle: "solid",
         outlineWidth: 1
       }
@@ -1091,7 +1110,7 @@ class ToggleGroup extends React.Component {
     }, /*#__PURE__*/React.createElement(PointToggle, {
       num: num,
       handlePointToggle: this.props.handlePointToggle
-    })))));
+    }))));
   }
 
 }
