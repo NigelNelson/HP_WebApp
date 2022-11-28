@@ -338,9 +338,8 @@ mri_points = np.array(new_nums[:, 2:])
 use_sift = False
 if len(sift_points.split(',')) > 1:
     use_sift = True
-
-nums = [eval(x) for x in sift_points.split(',')]
-sift_points = np.array(nums).reshape([-1, 2]).astype(int)
+    nums = [eval(x) for x in sift_points.split(',')]
+    sift_points = np.array(nums).reshape([-1, 2]).astype(int)
 
 
 # hist_points = np.flip(new_nums[:, :2], axis=-1)

@@ -20,7 +20,9 @@ class App extends React.Component {
             hist_file: "",
             mri_file: "",
             hist_mri_points: [],
-            sift_points: []
+            sift_points: [],
+            is_sift_running: false,
+            is_inference_running: false
         };
     }
 
@@ -29,7 +31,9 @@ class App extends React.Component {
         const mri_id = 'mri_img';
         const hist_canvas_id = 'hist_canvas';
         const mri_canvas_id = 'mri_canvas';
+
         const predict_id = 'predict_btn';
+        const sift_id = 'sift_btn';
 
         let hist_mri_points = this.state.hist_mri_points;
 
@@ -54,13 +58,26 @@ class App extends React.Component {
 
         var num_toggles = 0;
         var toggle_nums = this.state.toggle_nums
+        let is_sift_running = this.state.is_sift_running;
+        let is_inference_running = this.state.is_inference_running;
 
         const handlePointToggle = (num) => {
-            this.setState({
-                display_mri_points: [this.state.mri_shapes[num]],
-                display_hist_points: [this.state.hist_shapes[num]],
-                current_point_idx: num
-            });
+            let num_points = this.state.toggle_nums.length;
+            if(num < num_points){
+                this.setState({
+                    current_point_idx: num
+                });
+                if(mri_shapes.length > num){
+                    this.setState({
+                        display_mri_points: [this.state.mri_shapes[num]],
+                    });
+                }
+                if(hist_shapes.length > num){
+                    this.setState({
+                        display_hist_points: [this.state.hist_shapes[num]]
+                    });
+                }
+            }
         }
 
         const handleNextPoint = () => {
@@ -68,10 +85,18 @@ class App extends React.Component {
             let point_idx = this.state.current_point_idx + 1;
             if(point_idx < num_points){
                 this.setState({
-                    display_mri_points: [this.state.mri_shapes[point_idx]],
-                    display_hist_points: [this.state.hist_shapes[point_idx]],
                     current_point_idx: point_idx
                 });
+                if(mri_shapes.length > point_idx){
+                    this.setState({
+                        display_mri_points: [this.state.mri_shapes[point_idx]],
+                    });
+                }
+                if(hist_shapes.length > point_idx){
+                    this.setState({
+                        display_hist_points: [this.state.hist_shapes[point_idx]]
+                    });
+                }
             }
         }
 
@@ -79,10 +104,18 @@ class App extends React.Component {
             let point_idx = this.state.current_point_idx - 1;
             if(point_idx >= 0){
                 this.setState({
-                    display_mri_points: [this.state.mri_shapes[point_idx]],
-                    display_hist_points: [this.state.hist_shapes[point_idx]],
                     current_point_idx: point_idx
                 });
+                if(mri_shapes.length > point_idx){
+                    this.setState({
+                        display_mri_points: [this.state.mri_shapes[point_idx]],
+                    });
+                }
+                if(hist_shapes.length > point_idx){
+                    this.setState({
+                        display_hist_points: [this.state.hist_shapes[point_idx]]
+                    });
+                }
             }
         }
 
@@ -364,6 +397,18 @@ class App extends React.Component {
             this.setState({
                 display_hist_points: hist_points,
                 display_mri_points: mri_points
+            });
+        }
+
+        const log_sift_running = (data) => {
+            this.setState({
+                is_sift_running: data
+            });
+        }
+
+        const log_inference_running = (data) => {
+            this.setState({
+                is_inference_running: data
             });
         }
 
@@ -699,6 +744,9 @@ class App extends React.Component {
             let hist_canvas = document.getElementById(hist_canvas_id);
             let hist_context = hist_canvas.getContext('2d');
 
+            hist_shapes = [];
+
+
             data.forEach(function (points){
                 let mri_x = Number(points[1]);
                 let mri_y = Number(points[0]);
@@ -712,18 +760,18 @@ class App extends React.Component {
 
                 drawCircle(hist_context, mri_x, mri_y, radius, color, color, strokeWidth);
 
-                mri_shapes.push( {x:mri_x, y:mri_y, radius:radius, fill:color, stroke:color, strokeWith: strokeWidth} );
+                hist_shapes.push( {x:mri_x, y:mri_y, radius:radius, fill:color, stroke:color, strokeWith: strokeWidth} );
 
                 toggle_nums.push(num_toggles);
                 num_toggles = num_toggles + 1;
             })
 
-            display_hist_points = mri_shapes;
+            display_hist_points = hist_shapes;
             log_toggle_nums(toggle_nums);
             log_display_points(display_hist_points, []);
 
             this.setState({
-                hist_shapes: mri_shapes,
+                hist_shapes: hist_shapes,
                 mri_shapes: [],
                 toggle_nums: toggle_nums,
             });
@@ -736,7 +784,15 @@ class App extends React.Component {
         async function predictPoints(e) {
             log_display_points(display_hist_points, []);
             let predict_btn = document.getElementById(predict_id);
-            // predict_btn.disabled = true;
+            let sift_btn = document.getElementById(sift_id);
+            predict_btn.disabled = true;
+            sift_btn.disabled = true;
+            log_inference_running(true);
+
+            let temp_sift_points = sift_points
+            if(temp_sift_points.length < 1){
+                temp_sift_points = [0];
+            }
 
             const response = await fetch("http://localhost:5000/python", {
                 method: "post",
@@ -753,11 +809,10 @@ class App extends React.Component {
                 //     points_path: "C:/Users/nelsonni/OneDrive - Milwaukee School of Engineering/Documents/Research/Correct_Prostate_Points/Prostates/1102/8/predicted_histmri_points (1).csv"
                 // })
                 body: JSON.stringify({
-                    model_path: "C:/Users/nelsonni/OneDrive - Milwaukee School of Engineering/Documents/Research/pls_work/models/model",
                     hist_path: hist_file,
                     mri_path: mri_file,
                     points_path: hist_mri_points,
-                    sift_points: sift_points
+                    sift_points: temp_sift_points
                 })
             });
             //const response = await fetch('http://localhost:5000/python');
@@ -772,11 +827,23 @@ class App extends React.Component {
 
             display_sift_hist_points(points);
             predict_btn.disabled = false;
+            sift_btn.disabled = false;
+            log_inference_running(false);
 
 
         }
 
-        async function getSiftPoints(e) {
+        async function getSiftPoints() {
+
+            log_display_points([], []);
+
+            let predict_btn = document.getElementById(predict_id);
+            let sift_btn = document.getElementById(sift_id);
+            predict_btn.disabled = true;
+            sift_btn.disabled = true;
+
+            log_sift_running(true);
+
 
             const response = await fetch("http://localhost:5000/sift", {
                 method: "post",
@@ -803,29 +870,9 @@ class App extends React.Component {
             display_predicted_mri_points(points);
             log_sift_points(points);
 
-
-        }
-
-        async function getHistFile(e) {
-
-            const response = await fetch("http://localhost:5000/getHist", {
-                method: "post",
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                }
-            });
-            //const response = await fetch('http://localhost:5000/python');
-            const body = await response.json();
-
-            if (response.status !== 200) {
-                throw Error(body.message)
-            }
-            console.log(body.hist_path);
-
-            let points = body.hist_path;
-
-            display_predicted_mri_points(points);
+            log_sift_running(false);
+            predict_btn.disabled = false;
+            sift_btn.disabled = false;
 
         }
 
@@ -841,8 +888,8 @@ class App extends React.Component {
                         <div className="HolyGrail-nav container" style={{width: '150px'}}>
                             {hist_data && mri_data &&
                                 <div className="row row-cols-2">
-                                    <SiftButton onClick={getSiftPoints}/>
-                                    <PredictButton onClick={predictPoints} id={predict_id}/>
+                                    <SiftButton onClick={getSiftPoints} id={sift_id} isRunning={is_sift_running}/>
+                                    <PredictButton onClick={predictPoints} id={predict_id} isRunning={is_inference_running}/>
                                 </div>
                             }
                                     {toggle_nums.length > 0 &&

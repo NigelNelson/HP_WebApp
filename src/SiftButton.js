@@ -6,8 +6,17 @@ class SiftButton extends React.Component {
                     onClick={this.props.onClick}
                     style={{maxHWidth: '200px',
                         marginTop: '10px',
-                        marginBottom: '15px '}}>
-                Get Sift Points
+                        marginBottom: '15px '}}
+                    id={this.props.id}>
+                {this.props.isRunning &&
+                    <span className="spinner-border spinner-border-sm m-1"></span>
+                }
+                {this.props.isRunning &&
+                   <div className="m-0 p-0">Computing...</div>
+                }
+                {!this.props.isRunning &&
+                    <div className="m-0 p-0">Get Sift Points</div>
+                }
             </button>
         )
     }
