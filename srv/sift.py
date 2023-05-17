@@ -432,6 +432,8 @@ def load_histology(filepath):
  #################################################################################################
 
 #hist_path = sys.argv[1]
+
+# Script will wait for the hist_path to be sent by the server
 hist_path = input()
 
 with suppress_stdout():

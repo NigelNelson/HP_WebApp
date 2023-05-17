@@ -325,10 +325,13 @@ assert len(sys.argv) == 2
 model_path = sys.argv[1]
 # points_path = sys.argv[2]
 
+# Collect the inputs sent by the server
 hist_path = input()
 mri_path = input()
 points = input()
 sift_points = input()
+
+# Reformat the points sent by the server
 nums = [eval(x) for x in points.split(',')]
 new_nums = np.array(nums).reshape([-1, 4]).astype(int)
 
@@ -392,5 +395,6 @@ with suppress_stdout():
 
 # print(json.dumps(output_points.tolist()))
 
+# Send back the model's inference
 print(json.dumps(output_points.tolist()))
 sys.stdout.flush()

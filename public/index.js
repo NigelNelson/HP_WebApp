@@ -914,7 +914,7 @@ class App extends React.Component {
       className: "row row-cols-2"
     }, /*#__PURE__*/React.createElement(FileSelect, {
       onFileSelect: display_points,
-      promptStatement: "Choose Histology points:",
+      promptStatement: "Choose Homologous points:",
       acceptedFile: ".csv"
     })))), /*#__PURE__*/React.createElement("div", {
       className: "HolyGrail-right"

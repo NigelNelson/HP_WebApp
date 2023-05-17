@@ -5,7 +5,7 @@ var bodyParser = require('body-parser')
 const app = express(); //Line 2
 const port = process.env.PORT || 5000; //Line 3
 
-const model_path = "C:/Users/nelsonni/OneDrive - Milwaukee School of Engineering/Documents/Research/pls_work/models/model";
+const model_path = "C:/Users/nelsonni/OneDrive - Milwaukee School of Engineering/Documents/Research/HPT_App/models/model";
 
 // let sift_points = [];
 
@@ -19,15 +19,20 @@ app.use(bodyParser.json())
 // This displays message that the server running and listening to specified port
 app.listen(port, () => console.log(`Listening on port ${port}`)); //Line 6
 
+// Start the inference script so it's ready for any requests
 let inferenceProcess = spawn('python',["inference.py", model_path]);
 let inferenceRunning = true;
 console.log("spawned inference process");
+// Start the SIFT script so it's ready for any requests
 let pythonProcess = spawn('python',["sift.py"]);
 let siftRunning = true;
 console.log("spawned sift process");
 
 
 app.post('/python', (req, res) => {
+    /**
+     * Endpoint to handle inference requests
+     */
     if(!inferenceRunning){
         inferenceProcess = spawn('python',["inference.py", model_path]);
         console.log("spawned inference process");
@@ -40,9 +45,11 @@ app.post('/python', (req, res) => {
 
     console.log(sift_points);
 
+    // send the collected paths to the inference process
     inferenceProcess.stdin.write(hist_path + '\n' + mri_path + '\n' + points_path + '\n' + sift_points);
     inferenceProcess.stdin.end();
 
+    // Send the response points
     inferenceProcess.stdout.on('data', (data) => {
         let points = (JSON.parse(data.toString()));
         console.log(points);
@@ -61,6 +68,9 @@ app.post('/python', (req, res) => {
 }); //Line
 
 app.post('/sift', (req, res) => {
+    /**
+     * Endpoint to handle SIFT requests
+     */
     if(!siftRunning){
         pythonProcess = spawn('python',["sift.py"]);
         console.log("spawned sift process");
@@ -68,9 +78,11 @@ app.post('/sift', (req, res) => {
     console.log("Running sift process");
     let hist_path = req.body.hist_path;
 
+    // Send the path to the histology image to the SIFT script
     pythonProcess.stdin.write(hist_path);
     pythonProcess.stdin.end();
 
+    // Respond with the SIFT points
     pythonProcess.stdout.on('data', (data) => {
         points = (JSON.parse(data.toString()));
         res.send({'test': points});
