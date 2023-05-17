@@ -53,6 +53,11 @@ class App extends React.Component {
     let is_inference_running = this.state.is_inference_running;
 
     const handlePointToggle = num => {
+      /**
+       * Action handler that responds to when a point is clicked from
+       * the list of points. Result is all other points  are removed from the
+       * display
+       */
       let num_points = this.state.toggle_nums.length;
 
       if (num < num_points) {
@@ -75,6 +80,10 @@ class App extends React.Component {
     };
 
     const handleNextPoint = () => {
+      /**
+       * Action handler that responds to when 'next' is clicked
+       * Results in only the next point pair being displayed
+       */
       let num_points = this.state.toggle_nums.length;
       let point_idx = this.state.current_point_idx + 1;
 
@@ -98,6 +107,10 @@ class App extends React.Component {
     };
 
     const handlePreviousPoint = () => {
+      /**
+       * Action handler that responds to when 'previous' is clicked
+       * Results in only the previous point pair being displayed
+       */
       let point_idx = this.state.current_point_idx - 1;
 
       if (point_idx >= 0) {
@@ -120,6 +133,10 @@ class App extends React.Component {
     };
 
     const handleClickALl = () => {
+      /**
+       * Action handler that responds to when 'Show all' is clicked
+       * Results in all point pairs being displayed
+       */
       this.setState({
         display_mri_points: this.state.mri_shapes,
         display_hist_points: this.state.hist_shapes,
@@ -128,6 +145,10 @@ class App extends React.Component {
     };
 
     const handleClick = () => {
+      /**
+       * Action handler that responds to when the 'Edit points'
+       * toggle is clicked. Allows dragging and dropping of points
+       */
       let mri_switch = document.getElementById(mri_switch_id);
 
       if (mri_switch.checked) {
@@ -180,6 +201,9 @@ class App extends React.Component {
     };
 
     function readNIFTI(name, data) {
+      /**
+       * Reads in the NIFT file format (MRI images)
+       */
       var mri_div = document.getElementById(mri_id);
       var canvas = document.createElement("canvas");
       canvas.id = mri_canvas_id;
@@ -204,6 +228,9 @@ class App extends React.Component {
     }
 
     function drawCanvas(canvas, slice, niftiHeader, niftiImage) {
+      /**
+       * Displays a NIFTI image to a canvas
+       */
       // get nifti dimensions
       var cols = niftiHeader.dims[1];
       var rows = niftiHeader.dims[2]; // set canvas dimensions to nifti slice dimensions
@@ -292,6 +319,9 @@ class App extends React.Component {
     }
 
     function makeSlice(file, start, length) {
+      /**
+       * Helper function to read in NIFTIs
+       */
       var fileType = typeof File;
 
       if (fileType === 'undefined') {
@@ -314,6 +344,9 @@ class App extends React.Component {
     }
 
     function readFile(file) {
+      /**
+       * Reads in the NIFT file format (MRI images)
+       */
       var blob = makeSlice(file, 0, file.size);
       var reader = new FileReader();
 
@@ -414,6 +447,9 @@ class App extends React.Component {
     };
 
     const drawCircle = (ctx, x, y, radius, fill, stroke, strokeWidth) => {
+      /**
+       * Draws a circle to indicate where a point is located
+       */
       ctx.fillStyle = fill;
       ctx.strokeStyle = stroke;
       ctx.beginPath();
@@ -432,12 +468,18 @@ class App extends React.Component {
     };
 
     const selectColor = number => {
+      /**
+       * Creates equal distribution of colors for points
+       */
       const hue = number * 137.508; // use golden angle approximation
 
       return `hsl(${hue},100%,50%)`;
     };
 
     const display_points = () => {
+      /**
+       * Displays the loaded points onto the canvas
+       */
       let hist_canvas = document.getElementById(hist_canvas_id);
       let hist_context = hist_canvas.getContext('2d');
       let mri_canvas = document.getElementById(mri_canvas_id);
@@ -689,10 +731,13 @@ class App extends React.Component {
         mri_canvas.onmouseup = null;
         mri_canvas.onmouseout = null;
       }
-    } //////////////////////////// Helper Functions For Python Scipt Responses  //////////////////////////
+    } //////////////////////////// Helper Functions For Python Script Responses  //////////////////////////
 
 
     const display_sift_hist_points = data => {
+      /**
+       * Function that draws the SIFT points sent from the backend python scripts
+       */
       let mri_canvas = document.getElementById(mri_canvas_id);
       let mri_context = mri_canvas.getContext('2d');
       mri_shapes = [];
@@ -727,6 +772,9 @@ class App extends React.Component {
     };
 
     const display_predicted_mri_points = data => {
+      /**
+       * Displays the predicted MRI points sent from the HPT on the backend scripts
+       */
       let hist_canvas = document.getElementById(hist_canvas_id);
       let hist_context = hist_canvas.getContext('2d');
       hist_shapes = [];
@@ -762,6 +810,9 @@ class App extends React.Component {
 
 
     async function predictPoints(e) {
+      /**
+       * Sends request to backend HPT script to predict MRI points
+       */
       log_display_points(display_hist_points, []);
       let predict_btn = document.getElementById(predict_id);
       let sift_btn = document.getElementById(sift_id);
@@ -810,6 +861,9 @@ class App extends React.Component {
     }
 
     async function getSiftPoints() {
+      /**
+       * Sends request to backend HPT script to get histology SIFT points
+       */
       log_display_points([], []);
       let predict_btn = document.getElementById(predict_id);
       let sift_btn = document.getElementById(sift_id);
